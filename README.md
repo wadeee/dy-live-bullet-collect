@@ -1,9 +1,13 @@
 # 抖音直播弹幕爬取 python 实现
 
+## 运行
+
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
+
+##运行效果
 
 ```bash
 
@@ -26,4 +30,11 @@ python main.py
 2023-08-23 17:11:00 [弹幕] #***: 烦死人了，怎么还不点照片[发怒][发怒][发怒][发怒]
 2023-08-23 17:11:01 [弹幕] 沫***: 外星人。床上的。这回咱们是。
 
+```
+
+## Mac打包
+
+```bash
+pyinstaller -F main.py --add-data "static/*:static/"
+pyinstaller main.py --add-data "static/*:static/"
 ```
