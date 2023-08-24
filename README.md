@@ -7,9 +7,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
-##运行效果
+## 运行效果
 
-```bash
+```
 
 2023-08-23 17:10:42 [弹幕] 芳***: 你倒点照片呀，[发怒][发怒][发怒]
 2023-08-23 17:10:45 [弹幕] 气***: 快点选喽
@@ -32,9 +32,14 @@ python main.py
 
 ```
 
-## Mac打包
+## 打包
 
 ```bash
+## MacOS
+pyinstaller -F main.py --add-data "static/*:static/"
+pyinstaller main.py --add-data "static/*:static/"
+
+## Windows
 pyinstaller -F main.py --add-data "static/*:static/"
 pyinstaller main.py --add-data "static/*:static/"
 ```
