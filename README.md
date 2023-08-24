@@ -40,6 +40,6 @@ pyinstaller -F main.py --add-data "static/*:static/"
 pyinstaller main.py --add-data "static/*:static/"
 
 ## Windows
-pyinstaller -F main.py --add-data "static/*:static/"
-pyinstaller main.py --add-data "static/*:static/"
+pyinstaller -F main.py --add-data "static/*;static/"
+pyinstaller main.py --add-data "static/*;static/"
 ```
