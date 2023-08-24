@@ -21,7 +21,7 @@ def get_room_info(url):
         'cookie': '__ac_nonce=0638733a400869171be51',
     }
 
-    proxies = dict(http="http://localhost:4780", https="http://localhost:4780")
+    proxies = dict(http="", https="")
 
     response = requests.get(url, headers=headers, data=payload, proxies=proxies)
     res_cookies = response.cookies
