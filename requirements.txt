@@ -3,9 +3,11 @@ certifi==2023.7.22
 charset-normalizer==3.2.0
 idna==3.4
 macholib==1.16.2
+pefile==2023.2.7
 protobuf==4.24.1
 pyinstaller==5.13.0
 pyinstaller-hooks-contrib==2023.7
+pywin32-ctypes==0.2.2
 PyYAML==6.0.1
 requests==2.31.0
 urllib3==2.0.4
