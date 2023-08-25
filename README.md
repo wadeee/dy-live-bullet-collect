@@ -1,5 +1,11 @@
 # 抖音直播弹幕爬取 python 实现
 
+## 环境
+
+```
+python 3.11.4
+```
+
 ## 运行
 
 ```bash
@@ -10,7 +16,6 @@ python main.py
 ## 运行效果
 
 ```
-
 2023-08-23 17:10:42 [弹幕] 芳***: 你倒点照片呀，[发怒][发怒][发怒]
 2023-08-23 17:10:45 [弹幕] 气***: 快点选喽
 2023-08-23 17:10:45 [弹幕] 秀***: 1
@@ -29,17 +34,16 @@ python main.py
 2023-08-23 17:10:59 [弹幕] 用***: 22222222222222222222222222
 2023-08-23 17:11:00 [弹幕] #***: 烦死人了，怎么还不点照片[发怒][发怒][发怒][发怒]
 2023-08-23 17:11:01 [弹幕] 沫***: 外星人。床上的。这回咱们是。
-
 ```
 
 ## 打包
 
 ```bash
 ## MacOS
-pyinstaller -F main.py --add-data "static/*:static/"
-pyinstaller main.py --add-data "static/*:static/"
+pyinstaller -F main.py --add-data "static/*:static/" # 打包成单个文件
+pyinstaller main.py --add-data "static/*:static/" # 打包成文件夹
 
 ## Windows
-pyinstaller -F main.py --add-data "static/*;static/"
-pyinstaller main.py --add-data "static/*;static/"
+pyinstaller -F main.py --add-data "static/*;static/" # 打包成单个文件
+pyinstaller main.py --add-data "static/*;static/" # 打包成文件夹
 ```
