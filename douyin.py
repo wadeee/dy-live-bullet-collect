@@ -114,9 +114,12 @@ class Douyin:
             match msg.method:
                 case 'WebcastChatMessage':
                     self._parse_chat_msg(msg.payload)
-                # case "WebcastGiftMessage":
+                case "WebcastGiftMessage":
+                    self._parse_gift_msg(msg.payload)
                 # case "WebcastLikeMessage":
+                #     self._parse_like_msg(msg.payload)
                 # case "WebcastMemberMessage":
+                #     self._parse_member_msg(msg.payload)
                 # case 'WebcastInRoomBannerMessage':
                 # case 'WebcastRoomRankMessage':
                 # case 'WebcastRoomDataSyncMessage':
@@ -142,3 +145,29 @@ class Douyin:
         user_name = payload_pack.user.nickName
         content = payload_pack.content
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
+
+    @staticmethod
+    def _parse_gift_msg(payload):
+        payload_pack = dy_pb2.GiftMessage()
+        payload_pack.ParseFromString(payload)
+        formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.sendTime/1000))
+        user_name = payload_pack.user.nickName
+        gift_name = payload_pack.gift.name
+        gift_cnt = payload_pack.comboCount
+        print(f"{formatted_time} [礼物] {user_name}: {gift_name} * {gift_cnt}")
+
+    @staticmethod
+    def _parse_like_msg(payload):
+        payload_pack = dy_pb2.LikeMessage()
+        payload_pack.ParseFromString(payload)
+        user_name = payload_pack.user.nickName
+        like_cnt = payload_pack.count
+        print(f"[点赞] {user_name}: 点赞 * {like_cnt}")
+
+    @staticmethod
+    def _parse_member_msg(payload):
+        payload_pack = dy_pb2.MemberMessage()
+        payload_pack.ParseFromString(payload)
+        user_name = payload_pack.user.nickName
+        print(f"[入场] {user_name} 进入直播间")
+
