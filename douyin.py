@@ -114,21 +114,13 @@ class Douyin:
             match msg.method:
                 case 'WebcastChatMessage':
                     self._parse_chat_msg(msg.payload)
-                    break
-                case "WebcastGiftMessage":
-                    break
-                case "WebcastLikeMessage":
-                    break
-                case "WebcastMemberMessage":
-                    break
-                case 'WebcastInRoomBannerMessage':
-                    break
-                case 'WebcastRoomRankMessage':
-                    break
-                case 'WebcastRoomDataSyncMessage':
-                    break
-                case _:
-                    break
+                # case "WebcastGiftMessage":
+                # case "WebcastLikeMessage":
+                # case "WebcastMemberMessage":
+                # case 'WebcastInRoomBannerMessage':
+                # case 'WebcastRoomRankMessage':
+                # case 'WebcastRoomDataSyncMessage':
+                # case _:
 
     @staticmethod
     def _on_error(ws, error):
