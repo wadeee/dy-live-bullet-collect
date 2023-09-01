@@ -4,6 +4,7 @@ import logging
 import re
 import time
 import urllib.parse
+from datetime import datetime
 
 import requests
 import websocket
@@ -116,10 +117,10 @@ class Douyin:
                     self._parse_chat_msg(msg.payload)
                 case "WebcastGiftMessage":
                     self._parse_gift_msg(msg.payload)
-                # case "WebcastLikeMessage":
-                #     self._parse_like_msg(msg.payload)
-                # case "WebcastMemberMessage":
-                #     self._parse_member_msg(msg.payload)
+                case "WebcastLikeMessage":
+                    self._parse_like_msg(msg.payload)
+                case "WebcastMemberMessage":
+                    self._parse_member_msg(msg.payload)
                 # case 'WebcastInRoomBannerMessage':
                 # case 'WebcastRoomRankMessage':
                 # case 'WebcastRoomDataSyncMessage':
@@ -150,7 +151,7 @@ class Douyin:
     def _parse_gift_msg(payload):
         payload_pack = dy_pb2.GiftMessage()
         payload_pack.ParseFromString(payload)
-        formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.sendTime/1000))
+        formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
         gift_name = payload_pack.gift.name
         gift_cnt = payload_pack.comboCount
@@ -160,14 +161,16 @@ class Douyin:
     def _parse_like_msg(payload):
         payload_pack = dy_pb2.LikeMessage()
         payload_pack.ParseFromString(payload)
+        formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
         like_cnt = payload_pack.count
-        print(f"[点赞] {user_name}: 点赞 * {like_cnt}")
+        print(f"{formatted_time} [点赞] {user_name}: 点赞 * {like_cnt}")
 
     @staticmethod
     def _parse_member_msg(payload):
         payload_pack = dy_pb2.MemberMessage()
         payload_pack.ParseFromString(payload)
+        formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
-        print(f"[入场] {user_name} 进入直播间")
+        print(f"{formatted_time} [入场] {user_name} 进入直播间")
 
