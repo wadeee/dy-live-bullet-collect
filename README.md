@@ -13,6 +13,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 配置位置（包括URL）
+
+```
+static/config_dev.yml 
+```
+
 ## 运行效果
 
 ```
