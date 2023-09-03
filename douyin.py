@@ -9,6 +9,7 @@ from datetime import datetime
 import requests
 import websocket
 
+import config
 from protobuf import dy_pb2
 
 
@@ -54,7 +55,7 @@ class Douyin:
                     'room_id': live_room_id,
                     'room_title': live_room_title,
                 }
-            except Exception as e:
+            except Exception:
                 self.room_info = None
         else:
             self.room_info = None
@@ -64,21 +65,8 @@ class Douyin:
         if self.room_info is None:
             logging.error(f"获取直播间({self.url})信息失败")
             return
-        ws_url = (r'wss://webcast3-ws-web-lq.douyin.com/webcast/im/push/v2/?app_name=douyin_web&version_code=180800'
-                  r'&webcast_sdk_version=1.3.0&update_version_code=1.3.0&compress=gzip&internal_ext=internal_src:dim'
-                  r'|wss_push_room_id:%s|wss_push_did:%s|dim_log_id:202302171547011A160A7BAA76660E13ED|fetch_time'
-                  r':1676620021641|seq:1|wss_info:0-1676620021641-0-0|wrds_kvs:WebcastRoomStatsMessage'
-                  r'-1676620020691146024_WebcastRoomRankMessage-1676619972726895075_AudienceGiftSyncData'
-                  r'-1676619980834317696_HighlightContainerSyncData-2&cursor=t-1676620021641_r-1_d-1_u-1_h-1&host'
-                  r'=https://live.douyin.com&aid=6383&live_id=1&did_rule=3&debug=false&endpoint=live_pc&support_wrds'
-                  r'=1&im_path=/webcast/im/fetch/&user_unique_id=%s&device_platform=web&cookie_enabled=true'
-                  r'&screen_width=1440&screen_height=900&browser_language=zh&browser_platform=MacIntel&browser_name'
-                  r'=Mozilla&browser_version=5.0%20('
-                  r'Macintosh;%20Intel%20Mac%20OS%20X%2010_15_7)%20AppleWebKit/537.36%20(KHTML,'
-                  r'%20like%20Gecko)%20Chrome/110.0.0.0%20Safari/537.36&browser_online=true&tz_name=Asia/Shanghai'
-                  r'&identity=audience&room_id=%s&heartbeatDuration=0&signature=00000000')
 
-        ws_url = ws_url.replace("%s", self.room_info.get('room_id'))
+        ws_url = config.content['ws']['origin_url'].replace("%s", self.room_info.get('room_id'))
         headers = {
             'cookie': 'ttwid=' + self.room_info.get('ttwid'),
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -173,4 +161,3 @@ class Douyin:
         formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
         print(f"{formatted_time} [入场] {user_name} 进入直播间")
-
