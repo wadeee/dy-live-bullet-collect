@@ -1,9 +1,7 @@
 import gzip
-import json
 import logging
 import re
 import time
-import urllib.parse
 from datetime import datetime
 
 import requests
@@ -35,30 +33,26 @@ class Douyin:
         res_cookies = response.cookies
         ttwid = res_cookies.get_dict().get("ttwid")
         res_origin_text = response.text
-        re_pattern = r'<script id="RENDER_DATA" type="application/json">(.*?)</script>'
-        re_obj = re.compile(re_pattern)
-        match = re_obj.search(res_origin_text)
-        if match:
-            try:
-                match_text = match.group(1)
-                res_text = urllib.parse.unquote(match_text)
-                app_data = json.loads(res_text)
-                app_json = app_data.get("app")
-                initial_state_json = app_json.get("initialState")
-                room_store_json = initial_state_json.get("roomStore")
-                live_room_id = room_store_json.get("roomInfo").get("roomId")
-                live_room_title = room_store_json.get("roomInfo").get("room").get("title")
-                self.room_info = {
-                    'url': self.url,
-                    'ttwid': ttwid,
-                    'room_store': room_store_json,
-                    'room_id': live_room_id,
-                    'room_title': live_room_title,
-                }
-            except Exception:
-                self.room_info = None
-        else:
-            self.room_info = None
+        re_pattern_room_id = r'\\"roomId\\":\\"(.*?)\\"'
+        re_obj_room_id = re.compile(re_pattern_room_id)
+        matches_room_id = re_obj_room_id.findall(res_origin_text)
+        live_room_id = live_room_title = None
+        for match_item in matches_room_id:
+            if len(match_item) == 19:
+                live_room_id = match_item
+        re_pattern_title = r'"live-room-name">(.*?)</h1>'
+        re_obj_title = re.compile(re_pattern_title)
+        matches_title = re_obj_title.findall(res_origin_text)
+        for match_item in matches_title:
+            if len(match_item) > 0:
+                live_room_title = match_item
+
+        self.room_info = {
+            'url': self.url,
+            'ttwid': ttwid,
+            'room_id': live_room_id,
+            'room_title': live_room_title,
+        } if live_room_id else None
 
     def connect_web_socket(self):
         self._get_room_info()
