@@ -57,5 +57,5 @@ static/config_dev.yml
 ## ENV设置
 
 ```bash
-export DY_LIVE_ENV="prod" ## 与config的后缀保持一致
+export DY_LIVE_ENV="prod" ## 生效配置 config-<DY_LIVE_ENV>.yml
 ```
