@@ -13,12 +13,6 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## 配置位置（包括URL）
-
-```
-static/config_dev.yml 
-```
-
 ## 运行效果
 
 ```
@@ -52,4 +46,16 @@ pyinstaller main.py --add-data "static/*:static/" # 打包成文件夹
 ## Windows
 pyinstaller -F main.py --add-data "static/*;static/" # 打包成单个文件
 pyinstaller main.py --add-data "static/*;static/" # 打包成文件夹
+```
+
+## 配置位置（包括URL）
+
+```
+static/config_dev.yml 
+```
+
+## ENV设置
+
+```bash
+export DY_LIVE_ENV="prod" ## 与config的后缀保持一致
 ```
