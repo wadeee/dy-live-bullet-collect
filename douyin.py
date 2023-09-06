@@ -1,4 +1,5 @@
 import gzip
+import json
 import logging
 import re
 import time
@@ -33,26 +34,34 @@ class Douyin:
         res_cookies = response.cookies
         ttwid = res_cookies.get_dict().get("ttwid")
         res_origin_text = response.text
-        re_pattern_room_id = r'\\"roomId\\":\\"(.*?)\\"'
-        re_obj_room_id = re.compile(re_pattern_room_id)
-        matches_room_id = re_obj_room_id.findall(res_origin_text)
-        live_room_id = live_room_title = None
-        for match_item in matches_room_id:
-            if len(match_item) == 19:
-                live_room_id = match_item
-        re_pattern_title = r'"live-room-name">(.*?)</h1>'
-        re_obj_title = re.compile(re_pattern_title)
-        matches_title = re_obj_title.findall(res_origin_text)
-        for match_item in matches_title:
-            if len(match_item) > 0:
-                live_room_title = match_item
-
-        self.room_info = {
-            'url': self.url,
-            'ttwid': ttwid,
-            'room_id': live_room_id,
-            'room_title': live_room_title,
-        } if live_room_id else None
+        re_pattern = config.content['re_pattern']
+        re_obj = re.compile(re_pattern)
+        match = re_obj.search(res_origin_text)
+        if match:
+            try:
+                match_text = match.group(1)
+                match_json_text = json.loads(f'"{match_text}"')
+                match_json = json.loads(match_json_text)
+                room_id = match_json.get('state').get('roomStore').get('roomInfo').get('roomId')
+                room_title = match_json.get('state').get('roomStore').get('roomInfo').get('room').get('title')
+                room_user_count = match_json.get('state').get('roomStore').get('roomInfo').get('room').get(
+                    'user_count_str')
+                unique_id = match_json.get('state').get('userStore').get('odin').get('user_unique_id')
+                avatar = match_json.get('state').get('roomStore').get('roomInfo').get('anchor').get('avatar_thumb').get(
+                    'url_list')[0]
+                self.room_info = {
+                    'url': self.url,
+                    'ttwid': ttwid,
+                    'room_id': room_id,
+                    'room_title': room_title,
+                    'room_user_count': room_user_count,
+                    'unique_id': unique_id,
+                    'avatar': avatar,
+                }
+            except Exception:
+                self.room_info = None
+        else:
+            self.room_info = None
 
     def connect_web_socket(self):
         self._get_room_info()
@@ -60,7 +69,9 @@ class Douyin:
             logging.error(f"获取直播间({self.url})信息失败")
             return
 
-        ws_url = config.content['ws']['origin_url'].replace("%s", self.room_info.get('room_id'))
+        now = str(time.time_ns() // 1000000)
+        ws_url = config.content['ws']['origin_url'].replace('${room_id}', self.room_info.get('room_id')).replace(
+            '${unique_id}', self.room_info.get('unique_id')).replace('${now}', now)
         headers = {
             'cookie': 'ttwid=' + self.room_info.get('ttwid'),
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
