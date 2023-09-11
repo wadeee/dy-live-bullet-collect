@@ -40,11 +40,9 @@ python main.py
 
 ```bash
 ## MacOS
-pyinstaller -F main.py --add-data "static/*:static/" # 打包成单个文件
 pyinstaller main.py --add-data "static/*:static/" # 打包成文件夹
 
 ## Windows
-pyinstaller -F main.py --add-data "static/*;static/" # 打包成单个文件
 pyinstaller main.py --add-data "static/*;static/" # 打包成文件夹
 ```
 
