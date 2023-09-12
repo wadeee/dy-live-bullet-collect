@@ -17,6 +17,7 @@ class Douyin:
     def __init__(self, url):
         self.ws_conn = None
         self.url = url
+        self.room_info = None
 
     def _get_room_info(self):
         payload = {}
@@ -36,12 +37,13 @@ class Douyin:
         res_origin_text = response.text
         re_pattern = config.content['re_pattern']
         re_obj = re.compile(re_pattern)
-        match = re_obj.search(res_origin_text)
-        if match:
+        matches = re_obj.findall(res_origin_text)
+        for match_text in matches:
             try:
-                match_text = match.group(1)
                 match_json_text = json.loads(f'"{match_text}"')
                 match_json = json.loads(match_json_text)
+                if match_json.get('state') is None:
+                    continue
                 room_id = match_json.get('state').get('roomStore').get('roomInfo').get('roomId')
                 room_title = match_json.get('state').get('roomStore').get('roomInfo').get('room').get('title')
                 room_user_count = match_json.get('state').get('roomStore').get('roomInfo').get('room').get(
@@ -60,8 +62,6 @@ class Douyin:
                 }
             except Exception:
                 self.room_info = None
-        else:
-            self.room_info = None
 
     def connect_web_socket(self):
         self._get_room_info()

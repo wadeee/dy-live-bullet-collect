@@ -1,6 +1,6 @@
 url: 'https://live.douyin.com/247556339267'
 
-re_pattern: '<script\snonce="\S+?"\s>self\.__pace_f\.push\(\[1,"c:\[\\"\$\\",\\"\$L13\\",null,([\s\S]+?)\]\\n"\]\)<\/script>'
+re_pattern: '<script\snonce="\S+?"\s>self\.__pace_f\.push\(\[\w,"\w:\[\\"\$\\",\\"\$L\d+\\",null,([\s\S]+?)\]\\n"\]\)<\/script>'
 
 log:
   format: '%(asctime)s - %(levelname)s - %(message)s'
