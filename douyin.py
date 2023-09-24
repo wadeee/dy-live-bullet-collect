@@ -35,7 +35,7 @@ class Douyin:
         res_cookies = response.cookies
         ttwid = res_cookies.get_dict().get("ttwid")
         res_origin_text = response.text
-        re_pattern = config.content['re_pattern']
+        re_pattern = config.content['douyin']['re_pattern']
         re_obj = re.compile(re_pattern)
         matches = re_obj.findall(res_origin_text)
         for match_text in matches:
@@ -70,7 +70,7 @@ class Douyin:
             return
 
         now = str(time.time_ns() // 1000000)
-        ws_url = config.content['ws']['origin_url'].replace('${room_id}', self.room_info.get('room_id')).replace(
+        ws_url = config.content['douyin']['ws_origin_url'].replace('${room_id}', self.room_info.get('room_id')).replace(
             '${unique_id}', self.room_info.get('unique_id')).replace('${now}', now)
         headers = {
             'cookie': 'ttwid=' + self.room_info.get('ttwid'),
