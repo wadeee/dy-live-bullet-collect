@@ -7,6 +7,7 @@ pefile==2023.2.7
 protobuf==4.24.2
 pyinstaller==5.13.2
 pyinstaller-hooks-contrib==2023.8
+python-dotenv==1.0.0
 pywin32-ctypes==0.2.2
 PyYAML==6.0.1
 requests==2.31.0
