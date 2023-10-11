@@ -11,3 +11,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=int(env.DY_LOG_LEVEL), format=config.content['log']['format'])
     dy = Douyin(url)
     dy.connect_web_socket()
+
+

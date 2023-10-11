@@ -12,12 +12,21 @@ import config
 from protobuf import dy_pb2
 
 
+class DouyinMessage:
+    def __init__(self, time: str, type: str, user_name: str, content: str):
+        self.time = time
+        self.type = type
+        self.user_name = user_name
+        self.content = content
+
+
 class Douyin:
 
-    def __init__(self, url):
-        self.ws_conn = None
+    def __init__(self, url, on_message):
+        self.ws_conn: websocket.WebSocketApp = None
         self.url = url
         self.room_info = None
+        self.__on_message__ = on_message
 
     def _get_room_info(self):
         payload = {}
@@ -131,14 +140,15 @@ class Douyin:
     def _on_open(ws):
         logging.info("Websocket opened")
 
-    @staticmethod
-    def _parse_chat_msg(payload):
+    def _parse_chat_msg(self, payload):
         payload_pack = dy_pb2.ChatMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.eventTime))
         user_name = payload_pack.user.nickName
         content = payload_pack.content
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
+        message = DouyinMessage(formatted_time, '弹幕', user_name, content)
+        self.__on_message__(message)
 
     @staticmethod
     def _parse_gift_msg(payload):
