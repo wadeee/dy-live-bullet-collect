@@ -9,7 +9,11 @@ env.init()
 if __name__ == '__main__':
     url = config.content['url']
     logging.basicConfig(level=int(env.DY_LOG_LEVEL), format=config.content['log']['format'])
-    dy = Douyin(url)
+
+
+    def on_message(message):
+        print(message)
+
+
+    dy = Douyin(url, on_message)
     dy.connect_web_socket()
-
-
