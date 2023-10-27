@@ -6,8 +6,7 @@ import time
 from datetime import datetime
 
 import requests
-import websocket
-
+import websockets
 import config
 from protobuf import dy_pb2
 
@@ -23,7 +22,7 @@ class DouyinMessage:
 class Douyin:
 
     def __init__(self, url, on_message):
-        self.ws_conn: websocket.WebSocketApp = None
+        self.ws_conn = None
         self.url = url
         self.room_info = None
         self.__on_message__ = on_message
@@ -72,7 +71,7 @@ class Douyin:
             except Exception:
                 self.room_info = None
 
-    def connect_web_socket(self):
+    async def connect_web_socket(self):
         self._get_room_info()
         if self.room_info is None:
             logging.error(f"获取直播间({self.url})信息失败")
@@ -87,15 +86,19 @@ class Douyin:
                           'Chrome/108.0.0.0 Safari/537.36'
         }
 
-        websocket.enableTrace(False)
-        self.ws_conn = websocket.WebSocketApp(ws_url,
-                                              header=headers,
-                                              on_message=self._on_message,
-                                              on_open=self._on_open,
-                                              on_error=self._on_error,
-                                              on_close=self._on_close)
-
-        self.ws_conn.run_forever(reconnect=1)
+        while True:
+            try:
+                async with websockets.connect(ws_url, extra_headers=headers) as ws_conn:
+                    self.ws_conn = ws_conn
+                    await self._on_open(self.ws_conn)
+                    async for message in ws_conn:
+                        await self._on_message(self.ws_conn,message)
+            except websockets.ConnectionClosedError as e:
+                # You'll need to handle reconnects manually
+                await self._on_close(e,self.ws_conn)
+            except Exception as e:
+                await self._on_error(e,self.ws_conn)
+                break  # or m
 
     def _send_ask(self, log_id, internal_ext):
         ack_pack = dy_pb2.PushFrame()
@@ -103,9 +106,9 @@ class Douyin:
         ack_pack.payloadType = internal_ext
 
         data = ack_pack.SerializeToString()
-        self.ws_conn.send(data, opcode=websocket.ABNF.OPCODE_BINARY)
+        # self.ws_conn.send(data, opcode=websocket.ABNF.OPCODE_BINARY)
 
-    def _on_message(self, ws, message):
+    async def _on_message(self, ws, message):
         msg_pack = dy_pb2.PushFrame()
         msg_pack.ParseFromString(message)
         decompressed_payload = gzip.decompress(msg_pack.payload)
@@ -116,31 +119,22 @@ class Douyin:
         for msg in payload_package.messagesList:
             match msg.method:
                 case 'WebcastChatMessage':
-                    self._parse_chat_msg(msg.payload)
-                case "WebcastGiftMessage":
-                    self._parse_gift_msg(msg.payload)
-                case "WebcastLikeMessage":
-                    self._parse_like_msg(msg.payload)
-                case "WebcastMemberMessage":
-                    self._parse_member_msg(msg.payload)
-                # case 'WebcastInRoomBannerMessage':
-                # case 'WebcastRoomRankMessage':
-                # case 'WebcastRoomDataSyncMessage':
-                # case _:
+                    await self._parse_chat_msg(msg.payload)
+      
 
     @staticmethod
-    def _on_error(ws, error):
+    async def _on_error(ws, error):
         logging.error(error)
 
     @staticmethod
-    def _on_close(ws, close_status_code, close_msg):
+    async def _on_close(ws, close_status_code, close_msg):
         logging.info("Websocket closed")
 
     @staticmethod
-    def _on_open(ws):
+    async def _on_open(ws):
         logging.info("Websocket opened")
 
-    def _parse_chat_msg(self, payload):
+    async def _parse_chat_msg(self, payload):
         payload_pack = dy_pb2.ChatMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.eventTime))
@@ -148,7 +142,7 @@ class Douyin:
         content = payload_pack.content
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
         message = DouyinMessage(formatted_time, '弹幕', user_name, content)
-        self.__on_message__(message)
+        await self.__on_message__(message)
 
     @staticmethod
     def _parse_gift_msg(payload):

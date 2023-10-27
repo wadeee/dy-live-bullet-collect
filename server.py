@@ -26,7 +26,7 @@ class Client:
 
         url = f"https://live.douyin.com/{room_id}"
         dy = Douyin(url, on_message=self.on_message)
-        dy.connect_web_socket()
+        await dy.connect_web_socket()
         self.dy = dy
 
     def close(self):
@@ -34,7 +34,8 @@ class Client:
         pass
 
     async def on_message(self, message: DouyinMessage):
-        await self.ws.send_json(message)
+        await self.ws.send_json({'ddd':'ddddd'})
+
 
 
 async def on_message(client: Client, message: str):

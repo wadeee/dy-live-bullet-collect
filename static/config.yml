@@ -1,4 +1,6 @@
-url: 'https://live.douyin.com/590636107129'
+url: 'https://live.douyin.com/840196859860'
+url1: 'https://live.douyin.com/785217135756'
+
 
 log:
   format: '%(asctime)s - %(levelname)s - %(message)s'
