@@ -19,6 +19,7 @@ class DouyinMessage:
         self.content = content
 
 
+
 class Douyin:
 
     def __init__(self, url, on_message):
@@ -85,21 +86,19 @@ class Douyin:
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
                           'Chrome/108.0.0.0 Safari/537.36'
         }
-
-        while True:
-            try:
-                async with websockets.connect(ws_url, extra_headers=headers) as ws_conn:
-                    self.ws_conn = ws_conn
-                    await self._on_open(self.ws_conn)
-                    async for message in ws_conn:
-                        await self._on_message(self.ws_conn,message)
-            except websockets.ConnectionClosedError as e:
-                # You'll need to handle reconnects manually
-                await self._on_close(e,self.ws_conn)
-            except Exception as e:
-                await self._on_error(e,self.ws_conn)
-                break  # or m
-
+        try:
+            # print("ws_url", ws_url)
+            async with websockets.connect(ws_url, extra_headers=headers) as ws_conn:
+                self.ws_conn = ws_conn
+                await self._on_open(self.ws_conn)
+                async for message in ws_conn:
+                    await self._on_message(self.ws_conn,message)
+        except websockets.ConnectionClosedError as e:
+            await self._on_close(e,self.ws_conn,'close')
+        except Exception as e:
+            await self._on_error(e,self.ws_conn)
+                
+  
     def _send_ask(self, log_id, internal_ext):
         ack_pack = dy_pb2.PushFrame()
         ack_pack.logId = log_id
