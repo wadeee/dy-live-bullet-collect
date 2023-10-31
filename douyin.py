@@ -87,7 +87,6 @@ class Douyin:
                           'Chrome/108.0.0.0 Safari/537.36'
         }
         try:
-            # print("ws_url", ws_url)
             async with websockets.connect(ws_url, extra_headers=headers) as ws_conn:
                 self.ws_conn = ws_conn
                 await self._on_open(self.ws_conn)
