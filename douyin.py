@@ -1,4 +1,5 @@
 import gzip
+import json
 import logging
 import re
 import time
@@ -8,6 +9,7 @@ import requests
 import websocket
 
 import config
+import live_rank
 from protobuf import dy_pb2
 
 
@@ -56,6 +58,7 @@ class Douyin:
 
     def connect_web_socket(self):
         self._get_room_info()
+        self.parseLiveRoomUrl()
         if self.room_info is None:
             logging.error(f"获取直播间({self.url})信息失败")
             return
@@ -76,6 +79,48 @@ class Douyin:
                                               on_close=self._on_close)
 
         self.ws_conn.run_forever(reconnect=1)
+
+    def parseLiveRoomUrl(self):
+        """
+        解析直播的弹幕websocket地址
+        :param url:直播地址
+        :return:
+        """
+        h = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+            'cookie': '__ac_nonce=0638733a400869171be51',
+        }
+        res = requests.get(url=self.url, headers=h)
+        global ttwid, roomStore, liveRoomId, liveRoomTitle, live_stream_url
+        data = res.cookies.get_dict()
+        ttwid = data['ttwid']
+        res = res.text
+        res_room = re.search(r'roomId\\":\\"(\d+)\\"', res)
+        # 获取直播主播的uid和昵称等信息
+        live_room_search = re.search(r'owner\\":(.*?),\\"room_auth', res)
+        # 如果没有获取到live_room信息，很有可能是直播已经关闭了，待优化
+        live_room_res = live_room_search.group(1).replace('\\"', '"')
+        live_room_info = json.loads(live_room_res)
+        print(f"主播账号信息: {live_room_info}")
+        # 直播间id
+        liveRoomId = res_room.group(1)
+        # 获取m3u8直播流地址：m3u8直播比flv延迟2秒左右
+        res_stream = re.search(r'hls_pull_url_map\\":(\{.*?})', res)
+        res_stream_m3u8s = json.loads(res_stream.group(1).replace('\\"', '"'))
+        # HD1和FULL_HD1随机获取，优先获取FULL_HD1
+        res_m3u8_hd1 = res_stream_m3u8s.get("FULL_HD1", "").replace("http", "https")
+        if not res_m3u8_hd1:
+            res_m3u8_hd1 = res_m3u8_hd1.get("HD1", "").replace("http", "https")
+        print(f"直播流m3u8链接地址是: {res_m3u8_hd1}")
+        # 找到flv直播流地址:区分标清|高清|蓝光
+        res_flv_search = re.search(r'flv\\":\\"(.*?)\\"', res)
+        res_stream_flv = res_flv_search.group(1).replace('\\"', '"').replace("\\\\u0026", "&")
+        if "https" not in res_stream_flv:
+            res_stream_flv = res_stream_flv.replace("http", "https")
+        print(f"直播流FLV地址是: {res_stream_flv}")
+        # 开始获取直播间排行
+        live_rank.interval_rank(liveRoomId)
 
     def _send_ask(self, log_id, internal_ext):
         ack_pack = dy_pb2.PushFrame()
