@@ -7,7 +7,7 @@ from datetime import datetime
 
 import requests
 import websocket
-
+import pandas as pd
 import config
 import live_rank
 from protobuf import dy_pb2
@@ -18,6 +18,12 @@ class Douyin:
     def __init__(self, url):
         self.ws_conn = None
         self.url = url
+        self.chat_messages = pd.DataFrame(columns=['时间', '用户', '消息'])
+        self.gift_messages = pd.DataFrame(columns=['时间', '用户', '礼物', '数量'])
+        self.like_messages = pd.DataFrame(columns=['时间', '用户', '点赞次数'])
+        self.member_messages = pd.DataFrame(columns=['时间', '用户'])
+        self.file_name = 'Douyin_Chat_Messages.xlsx'
+        self.message_count = 0  # 初始化消息计数器
 
     def _get_room_info(self):
         payload = {}
@@ -153,6 +159,36 @@ class Douyin:
                 # case 'WebcastRoomDataSyncMessage':
                 # case _:
 
+    def _add_to_dataframe(self, new_row, sheet_name):
+        if sheet_name == '礼物':
+            self.gift_messages = self.gift_messages._append(new_row, ignore_index=True)
+            if len(self.gift_messages) >= 100:
+                self._save_to_excel(self.gift_messages, '礼物')
+                self.gift_messages = self.gift_messages.iloc[0:0]  # 清空DataFrame
+        elif sheet_name == '弹幕':
+            self.chat_messages = self.chat_messages._append(new_row, ignore_index=True)
+            if len(self.chat_messages) >= 100:
+                self._save_to_excel(self.chat_messages, '弹幕')
+                self.chat_messages = self.chat_messages.iloc[0:0]  # 清空DataFrame
+        elif sheet_name == '点赞':
+            self.like_messages = self.like_messages._append(new_row, ignore_index=True)
+            if len(self.like_messages) >= 100:
+                self._save_to_excel(self.like_messages, '点赞')
+                self.like_messages = self.like_messages.iloc[0:0]  # 清空DataFrame
+        elif sheet_name == '入场':
+            self.member_messages = self.member_messages._append(new_row, ignore_index=True)
+            if len(self.member_messages) >= 100:
+                self._save_to_excel(self.member_messages, '入场')
+                self.member_messages = self.member_messages.iloc[0:0]  # 清空DataFrame
+
+    def _save_to_excel(self, dataframe, sheet_name):
+        # 保存DataFrame到Excel的特定工作表
+        try:
+            with pd.ExcelWriter(self.file_name, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
+                dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
+        except FileNotFoundError:
+            dataframe.to_excel(self.file_name, sheet_name=sheet_name, index=False)
+
     @staticmethod
     def _on_error(ws, error):
         logging.error(error)
@@ -165,38 +201,56 @@ class Douyin:
     def _on_open(ws):
         logging.info("Websocket opened")
 
-    @staticmethod
-    def _parse_chat_msg(payload):
+    # @staticmethod
+    def _parse_chat_msg(self, payload):
+        self.message_count += 1
         payload_pack = dy_pb2.ChatMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.eventTime))
         user_name = payload_pack.user.nickName
         content = payload_pack.content
+
+        # ...解析聊天消息的代码...
+        new_row = {'时间': formatted_time, '用户': user_name, '消息': content}
+        self._add_to_dataframe(new_row, '弹幕')  # 注意参数的更改
+
+        print("self.message_count", self.message_count)
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
 
-    @staticmethod
-    def _parse_gift_msg(payload):
+    # @staticmethod
+    def _parse_gift_msg(self, payload):
         payload_pack = dy_pb2.GiftMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
         gift_name = payload_pack.gift.name
         gift_cnt = payload_pack.comboCount
+
+        # ...解析礼物消息的代码...
+        new_row = {'时间': formatted_time, '用户': user_name, '礼物': gift_name, '数量': gift_cnt}
+        self._add_to_dataframe(new_row, '礼物')  # 注意参数的更改
         print(f"{formatted_time} [礼物] {user_name}: {gift_name} * {gift_cnt}")
 
-    @staticmethod
-    def _parse_like_msg(payload):
+    # @staticmethod
+    def _parse_like_msg(self, payload):
         payload_pack = dy_pb2.LikeMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
         like_cnt = payload_pack.count
+        # ...解析点赞消息的代码...
+        new_row = {'时间': formatted_time, '用户': user_name, '点赞次数': like_cnt}
+        self._add_to_dataframe(new_row, '点赞')
         print(f"{formatted_time} [点赞] {user_name}: 点赞 * {like_cnt}")
 
-    @staticmethod
-    def _parse_member_msg(payload):
+    # @staticmethod
+    def _parse_member_msg(self, payload):
         payload_pack = dy_pb2.MemberMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user_name = payload_pack.user.nickName
+
+        # ...解析会员消息的代码...
+        new_row = {'时间': formatted_time, '用户': user_name}
+        self._add_to_dataframe(new_row, '入场')
         print(f"{formatted_time} [入场] {user_name} 进入直播间")
