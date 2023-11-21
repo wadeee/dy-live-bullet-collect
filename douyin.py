@@ -25,6 +25,10 @@ class Douyin:
         self.file_name = 'Douyin_Chat_Messages.xlsx'
         self.message_count = 0  # 初始化消息计数器
 
+    def start_douyin_stream(url):
+        dy = Douyin(url)
+        dy.connect_web_socket()
+
     def _get_room_info(self):
         payload = {}
         headers = {
