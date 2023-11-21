@@ -19,7 +19,6 @@ class DouyinMessage:
         self.content = content
 
 
-
 class Douyin:
 
     def __init__(self, url, on_message):

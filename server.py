@@ -9,6 +9,7 @@ import inspect
 import ctypes
 
 
+
 from typing import List, Union
 
 from aiohttp import web
@@ -21,9 +22,9 @@ sockets: List[web.WebSocketResponse] = []
 class Client:
     def __init__(self, ws: web.WebSocketResponse):
         self.room_id = None
+        self.client_id = None
         self.ws = ws
         self.dy = None
-
         pass
 
     async def set_room_id(self, room_id: str):
@@ -39,7 +40,9 @@ class Client:
 
     
     async def on_message(self, message: DouyinMessage):
-        await self.ws.send_json(message.__dict__)
+        
+        await self.ws.send_json({**message.__dict__,'client_id':self.client_id})
+
 
 
 
@@ -48,15 +51,18 @@ async def on_message(client: Client, message: str):
 
 
 
-
 async def wshandler(request: web.Request) -> Union[web.WebSocketResponse, web.Response]:
     ws = web.WebSocketResponse()
+
     await ws.prepare(request)  # 等待websocket连接
     sockets.append(ws)
     client = Client(ws)
     id= request.query['id']
+    client.client_id = request.query['client_id']
     await client.set_room_id(id)
+    # print(ws.__dict__)
     async for msg in ws:
+        print(msg.type)
         if msg.type == aiohttp.WSMsgType.TEXT:  # type: ignore[misc]
             info =json.loads(msg.data)
             if  info['type'] == "control" and  info['data']=="close":  # type: ignore[misc]
@@ -90,10 +96,9 @@ async def on_shutdown(app: web.WebSocketResponse) -> None:
 
 def init() -> web.Application:
     app = web.Application()
-    # 匹配 room id
+
     app.router.add_get("/id", wshandler)
-    app.on_shutdown.append(on_shutdown)
     return app
 
 
-web.run_app(init())
+web.run_app(init(),port=9000)
