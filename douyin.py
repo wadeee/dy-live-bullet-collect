@@ -1,6 +1,7 @@
 import gzip
 import json
 import logging
+import os
 import re
 import time
 from datetime import datetime
@@ -22,8 +23,12 @@ class Douyin:
         self.gift_messages = pd.DataFrame(columns=['时间', '用户', '礼物', '数量'])
         self.like_messages = pd.DataFrame(columns=['时间', '用户', '点赞次数'])
         self.member_messages = pd.DataFrame(columns=['时间', '用户'])
-        self.file_name = 'Douyin_Chat_Messages.xlsx'
+        # 拼接出 Excel 文件名
+        filename = f"{url.split('/')[-1]}.xlsx"
+        self.file_name = 'DouyinMessages' + filename
         self.message_count = 0  # 初始化消息计数器
+        self.gift_values = {}
+        self.user_last_gift_value = {}
 
     def start_douyin_stream(url):
         dy = Douyin(url)
@@ -186,12 +191,42 @@ class Douyin:
                 self.member_messages = self.member_messages.iloc[0:0]  # 清空DataFrame
 
     def _save_to_excel(self, dataframe, sheet_name):
+        # 指定文件夹名称
+        folder_name = 'excel'
+        # 确保文件夹存在
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        # 构造完整的文件路径
+        file_path = os.path.join(folder_name, self.file_name)
+
         # 保存DataFrame到Excel的特定工作表
         try:
-            with pd.ExcelWriter(self.file_name, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
+            with pd.ExcelWriter(file_path, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
                 dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
         except FileNotFoundError:
-            dataframe.to_excel(self.file_name, sheet_name=sheet_name, index=False)
+            # 如果文件不存在，则创建新文件
+            with pd.ExcelWriter(file_path, mode='w', engine='openpyxl') as writer:
+                dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # 礼物关系字典
+    def get_gift_value(self, gift_name):
+        return self.gift_values.get(gift_name, 0)
+
+    @staticmethod
+    def load_gift_values():
+        json_file = 'jsonfiles/gifts.json'
+        with open(json_file, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        gift_values = {}
+        pages = data.get("data", {}).get("pages", [])
+        for page in pages:
+            if page.get("page_type") == 1:  # 检查是否为礼物页面
+                gifts = page.get("gifts", [])
+                for gift in gifts:
+                    name = gift.get("name")
+                    value = gift.get("diamond_count")
+                    gift_values[name] = value
+        return gift_values
 
     @staticmethod
     def _on_error(ws, error):
@@ -207,18 +242,19 @@ class Douyin:
 
     # @staticmethod
     def _parse_chat_msg(self, payload):
-        self.message_count += 1
         payload_pack = dy_pb2.ChatMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.eventTime))
         user_name = payload_pack.user.nickName
         content = payload_pack.content
 
-        # ...解析聊天消息的代码...
-        new_row = {'时间': formatted_time, '用户': user_name, '消息': content}
-        self._add_to_dataframe(new_row, '弹幕')  # 注意参数的更改
+        # 如果用户的最近一次礼物价值大于等于100，则记录弹幕
+        gift_threshold = 1
+        if self.user_last_gift_value.get(user_name, 0) >= gift_threshold:
+            print(f"{formatted_time} [礼物大于1的弹幕] {user_name}: {content}")
+            new_row = {'时间': formatted_time, '用户': user_name, '消息': content}
+            self._add_to_dataframe(new_row, '弹幕')
 
-        print("self.message_count", self.message_count)
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
 
     # @staticmethod
@@ -230,9 +266,15 @@ class Douyin:
         gift_name = payload_pack.gift.name
         gift_cnt = payload_pack.comboCount
 
-        # ...解析礼物消息的代码...
+        # 计算单次礼物的总价值
+        gift_value = self.get_gift_value(gift_name) * gift_cnt
+        # 更新用户的最近一次礼物价值
+        self.user_last_gift_value[user_name] = gift_value
+
+        # 添加礼物信息到 DataFrame
         new_row = {'时间': formatted_time, '用户': user_name, '礼物': gift_name, '数量': gift_cnt}
-        self._add_to_dataframe(new_row, '礼物')  # 注意参数的更改
+        self._add_to_dataframe(new_row, '礼物')
+
         print(f"{formatted_time} [礼物] {user_name}: {gift_name} * {gift_cnt}")
 
     # @staticmethod

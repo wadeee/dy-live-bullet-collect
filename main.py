@@ -6,7 +6,7 @@ from douyin import Douyin
 if __name__ == '__main__':
     urls = config.content['urls']  # 假设这里是一个包含多个URL的列表
     logging.basicConfig(level=config.content['log']['level'], format=config.content['log']['format'])
-
+    Douyin.gift_values = Douyin.load_gift_values()
     threads = []
     for url in urls:
         thread = threading.Thread(target=Douyin.start_douyin_stream, args=(url,))
