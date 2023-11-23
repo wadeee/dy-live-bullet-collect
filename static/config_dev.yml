@@ -1,4 +1,4 @@
-urls: ['https://live.douyin.com/921169302662','https://live.douyin.com/923670558441','https://live.douyin.com/868649311065','https://live.douyin.com/812580695387']
+urls: ['https://live.douyin.com/923670558441']
 
 log:
   format: '%(asctime)s - %(levelname)s - %(message)s'
@@ -30,3 +30,21 @@ rank_config:
   GAME_UUID: '157ae45b-263b-414a-8976-6d2ad210a7e8'
   # 应援UUID(这是我们自己项目推送使用的参数):4
   DONATION_UUID: '179019d3-83dd-4619-b7d9-579786659204'
+#  礼物数限制
+gift_threshold: 1
+# 多少信息存入excel一次 (尽量在50-100之间 过大过小都不太好)
+save_msg_number: 100
+# 直播数据文件格式
+Live_File_Type: '.xlsx'
+# 用户信息数据格式
+User_File_Type: '.json'
+
+# 是否开启性别筛选 0女 1男 2不展示,True/False
+Sex_Select:
+  Is_Open: True
+  Sex: 0
+
+# 弹幕文件存储位置
+Barrage_File_Position: 'D:\python_project\excel'
+# 用户信息存放位置
+User_File_Position: 'D:\python_project\userfile'

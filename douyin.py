@@ -19,15 +19,17 @@ class Douyin:
     def __init__(self, url):
         self.ws_conn = None
         self.url = url
-        self.chat_messages = pd.DataFrame(columns=['时间', '用户', '消息'])
+        self.chat_messages = pd.DataFrame(columns=['时间', '用户', '性别', '消息'])
         self.gift_messages = pd.DataFrame(columns=['时间', '用户', '礼物', '数量'])
         self.like_messages = pd.DataFrame(columns=['时间', '用户', '点赞次数'])
         self.member_messages = pd.DataFrame(columns=['时间', '用户'])
         # 拼接出 Excel 文件名
-        filename = f"{url.split('/')[-1]}.xlsx"
-        self.file_name = 'DouyinMessages' + filename
+        formatted_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + '_'
+        filename = f"{url.split('/')[-1]}"
+        self.file_name = 'LiveMsg' + formatted_time + filename + config.content['Live_File_Type']
+        self.user_file = 'UserMsg' + formatted_time + filename + config.content['User_File_Type']
         self.message_count = 0  # 初始化消息计数器
-        self.gift_values = {}
+        self.gift_values = self.load_gift_values()
         self.user_last_gift_value = {}
 
     def start_douyin_stream(url):
@@ -169,30 +171,31 @@ class Douyin:
                 # case _:
 
     def _add_to_dataframe(self, new_row, sheet_name):
+        save_msg_number = config.content['save_msg_number']
         if sheet_name == '礼物':
             self.gift_messages = self.gift_messages._append(new_row, ignore_index=True)
-            if len(self.gift_messages) >= 100:
+            if len(self.gift_messages) >= save_msg_number:
                 self._save_to_excel(self.gift_messages, '礼物')
                 self.gift_messages = self.gift_messages.iloc[0:0]  # 清空DataFrame
         elif sheet_name == '弹幕':
             self.chat_messages = self.chat_messages._append(new_row, ignore_index=True)
-            if len(self.chat_messages) >= 100:
+            if len(self.chat_messages) >= save_msg_number:
                 self._save_to_excel(self.chat_messages, '弹幕')
                 self.chat_messages = self.chat_messages.iloc[0:0]  # 清空DataFrame
         elif sheet_name == '点赞':
             self.like_messages = self.like_messages._append(new_row, ignore_index=True)
-            if len(self.like_messages) >= 100:
+            if len(self.like_messages) >= save_msg_number:
                 self._save_to_excel(self.like_messages, '点赞')
                 self.like_messages = self.like_messages.iloc[0:0]  # 清空DataFrame
         elif sheet_name == '入场':
             self.member_messages = self.member_messages._append(new_row, ignore_index=True)
-            if len(self.member_messages) >= 100:
+            if len(self.member_messages) >= save_msg_number:
                 self._save_to_excel(self.member_messages, '入场')
                 self.member_messages = self.member_messages.iloc[0:0]  # 清空DataFrame
 
     def _save_to_excel(self, dataframe, sheet_name):
         # 指定文件夹名称
-        folder_name = 'excel'
+        folder_name = config.content['Barrage_File_Position']
         # 确保文件夹存在
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -240,21 +243,72 @@ class Douyin:
     def _on_open(ws):
         logging.info("Websocket opened")
 
+    def _extract_user_info(self, user):
+        # 提取并返回用户信息字典
+        user_info = {
+            "id": user.id,
+            "shortId": user.shortId,
+            "nickName": user.nickName,
+            "gender": user.gender,
+            "displayId": user.displayId,
+            "secUid": user.secUid,
+            "avatarUrl": user.AvatarThumb.urlListList[0],
+            "badgeImageUrl": "",
+        }
+        return user_info
+
+    def _save_user_info_to_json(self, user_info):
+        folder_name = config.content['User_File_Position']
+        file_name = self.user_file
+        file_path = os.path.join(folder_name, file_name)
+
+        # 确保文件夹存在
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+
+        # 读取现有数据并检查重复
+        if not self._is_user_exist(file_path, user_info["id"]):
+            # 用户不存在，写入文件
+            with open(file_path, 'a', encoding='utf-8') as file:
+                json.dump(user_info, file, ensure_ascii=False)
+                file.write("\n")  # 添加换行符
+
+    def _is_user_exist(self, file_path, user_id):
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as file:
+                for line in file:
+                    try:
+                        user = json.loads(line.strip())
+                        if user.get("id") == user_id:
+                            return True
+                    except json.JSONDecodeError:
+                        continue
+        return False
+
     # @staticmethod
     def _parse_chat_msg(self, payload):
         payload_pack = dy_pb2.ChatMessage()
         payload_pack.ParseFromString(payload)
         formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(payload_pack.eventTime))
         user_name = payload_pack.user.nickName
+        sex = payload_pack.user.gender
         content = payload_pack.content
+        # 存入用户信息json文件
+        user_info = self._extract_user_info(payload_pack.user)
+        self._save_user_info_to_json(user_info)
 
         # 如果用户的最近一次礼物价值大于等于100，则记录弹幕
-        gift_threshold = 1
-        if self.user_last_gift_value.get(user_name, 0) >= gift_threshold:
-            print(f"{formatted_time} [礼物大于1的弹幕] {user_name}: {content}")
-            new_row = {'时间': formatted_time, '用户': user_name, '消息': content}
-            self._add_to_dataframe(new_row, '弹幕')
+        gift_threshold = config.content['gift_threshold']
 
+        if self.user_last_gift_value.get(user_name, 0) >= gift_threshold:
+            if not config.content['Sex_Select']['Is_Open']:
+                new_row = {'时间': formatted_time, '用户': user_name, '性别': sex, '消息': content}
+                self._add_to_dataframe(new_row, '弹幕')
+
+            if config.content['Sex_Select']['Is_Open']:
+                if sex == config.content['Sex_Select']['Sex']:
+                    new_row = {'时间': formatted_time, '用户': user_name, '性别': sex, '消息': content}
+                    self._add_to_dataframe(new_row, '弹幕')
         print(f"{formatted_time} [弹幕] {user_name}: {content}")
 
     # @staticmethod
@@ -270,7 +324,6 @@ class Douyin:
         gift_value = self.get_gift_value(gift_name) * gift_cnt
         # 更新用户的最近一次礼物价值
         self.user_last_gift_value[user_name] = gift_value
-
         # 添加礼物信息到 DataFrame
         new_row = {'时间': formatted_time, '用户': user_name, '礼物': gift_name, '数量': gift_cnt}
         self._add_to_dataframe(new_row, '礼物')
