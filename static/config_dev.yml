@@ -1,0 +1,50 @@
+urls: ['https://live.douyin.com/923670558441']
+
+log:
+  format: '%(asctime)s - %(levelname)s - %(message)s'
+  level: 10
+
+ws:
+  origin_url: 'wss://webcast5-ws-web-lq.douyin.com/webcast/im/push/v2/?app_name=douyin_web&version_code=180800&webcast_sdk_version=1.0.8&update_version_code=1.0.8&compress=gzip&device_platform=web&cookie_enabled=true&screen_width=1280&screen_height=828&browser_language=en&browser_platform=MacIntel&browser_name=Mozilla&browser_version=5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_15_7)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/116.0.0.0%20Safari/537.36&browser_online=true&tz_name=Asia/Shanghai&cursor=r-1_d-1_u-1_h-1_t-1693840981145&internal_ext=internal_src:dim|wss_push_room_id:%s|wss_push_did:%s|dim_log_id:20230904232301A1843F7561411B648853|first_req_ms:1693840981077|fetch_time:1693840981145|seq:1|wss_info:0-1693840981145-0-0|wrds_kvs:WebcastRoomStreamAdaptationMessage-1693840975214389506_WebcastRoomStatsMessage-1693840980236569365_WebcastRoomRankMessage-1693840968226161733&host=https://live.douyin.com&aid=6383&live_id=1&did_rule=3&endpoint=live_pc&support_wrds=1&user_unique_id=%s&im_path=/webcast/im/fetch/&identity=audience&room_id=%s&heartbeatDuration=0&signature=00000000'
+
+rank_config:
+  # 配置日志信息
+  LOG_FILE_SAVE: 'false'
+  LOG_LEVEL: 'logging.DEBUG'
+  LOG_FORMAT: '%(pastime)s - %(levelness)s - %(message)s'
+  # 特殊礼物单独统计
+  LIVE_GIFT_LIST: ["月下瀑布"]
+  # 是否抓取在线打赏排名
+  LIVE_RANK_LIST: True
+  # 获取礼物排名时间间隔: 建议不要低于10秒
+  LIVE_RANK_INTERVAL: 10
+  # 使用ws推送直播数据
+  LIVE_WEB_SEND: False
+  # 是否开启HTTP推送
+  LIVE_HTTP_SEND: True
+  # 多久向服务端推送一条消息
+  LIVE_SEND_INTERVAL: 3
+  # HTTP推送地址
+  LIVE_WEB_SEND_URL: 'http://************/game/gamemgnt'
+  # 一场比赛唯一的UUID
+  GAME_UUID: '157ae45b-263b-414a-8976-6d2ad210a7e8'
+  # 应援UUID(这是我们自己项目推送使用的参数):4
+  DONATION_UUID: '179019d3-83dd-4619-b7d9-579786659204'
+#  礼物数限制
+gift_threshold: 1
+# 多少信息存入excel一次 (尽量在50-100之间 过大过小都不太好)
+save_msg_number: 100
+# 直播数据文件格式
+Live_File_Type: '.xlsx'
+# 用户信息数据格式
+User_File_Type: '.json'
+
+# 是否开启性别筛选 0女 1男 2不展示,True/False
+Sex_Select:
+  Is_Open: True
+  Sex: 0
+
+# 弹幕文件存储位置
+Barrage_File_Position: 'D:\python_project\excel'
+# 用户信息存放位置
+User_File_Position: 'D:\python_project\userfile'

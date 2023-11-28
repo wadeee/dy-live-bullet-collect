@@ -4,5 +4,7 @@ import yaml
 
 import static
 
-with open(static.resource_path(f"static/config.yml"), 'r') as stream:
+_env = os.environ.get('DY_LIVE_ENV', 'dev')  # 默认为 'dev'
+print(f"当前环境为：{_env}")
+with open(static.resource_path(f"static/config_{_env}.yml"), 'r', encoding='utf-8') as stream:
     content = yaml.safe_load(stream)
