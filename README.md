@@ -68,5 +68,5 @@ export DY_LIVE_ENV="prod" ## 生效配置 config-<DY_LIVE_ENV>.yml
 
 <div style="display: flex; align-items: center;">
   <a href="https://github.com/ConcaXu" target="_blank"><img src="https://avatars.githubusercontent.com/u/71932317?s=400&u=83d5623cc2765fe5ff750187329448f1efc2b506&v=4" width="100" height="100" style="border-radius: 50%; margin-right: 20px;"></a>
-  <p>个人主页 [https://github.com/ConcaXu](https://github.com/ConcaXu) 查看更多关于他的信息和其他项目.</p>
+  <a align="right">个人主页 <a href='https://github.com/ConcaXu'] .</p>
 </div>
