@@ -351,5 +351,6 @@ class Douyin:
 
         # ...解析会员消息的代码...
         new_row = {'时间': formatted_time, '用户': user_name}
+        avatar = payload_pack.user.AvatarThumb.urlListList
         self._add_to_dataframe(new_row, '入场')
-        print(f"{formatted_time} [入场] {user_name} 进入直播间")
+        print(f"{formatted_time} [入场] {user_name} 进入直播间 [头像] {avatar}")
